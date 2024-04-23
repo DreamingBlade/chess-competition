@@ -1,5 +1,8 @@
 #pragma once
 #include <string>
+#include "chess-simulator.h"
+#include "chess.hpp"
+#include <random>
 
 namespace ChessSimulator {
 /**
@@ -10,3 +13,4 @@ namespace ChessSimulator {
  */
 std::string Move(std::string fen);
 } // namespace ChessSimulator
+int ScoreToAdd(chess::Board, auto move);

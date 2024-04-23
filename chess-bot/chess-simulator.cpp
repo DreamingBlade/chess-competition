@@ -5,13 +5,16 @@
 #include <random>
 using namespace ChessSimulator;
 
+
+const int KING_SCORE = 200;
+const int QUEEN_SCORE = 9;
+const int ROOK_SCORE = 5;
+const int KNIGHT_SCORE = 3;
+const int BISHOP_SCORE = 3;
+const int PAWN_SCORE = 1;
+const float MOVE_SCORE_REDUCTION = 0.5f;
+
 std::string ChessSimulator::Move(std::string fen) {
-    const int KING_SCORE = 200;
-    const int QUEEN_SCORE = 9;
-    const int ROOK_SCORE = 5;
-    const int KNIGHT_SCORE = 3;
-    const int BISHOP_SCORE = 3;
-    const int PAWN_SCORE = 1;
 
     // create your board based on the board string following the FEN notation
     // search for the best move using minimax / monte carlo tree search /
@@ -34,41 +37,34 @@ std::string ChessSimulator::Move(std::string fen) {
     std::uniform_int_distribution<> dist(0, moves.size() - 1);
     auto move = moves[dist(gen)];
 
-    //Check moves for capture
+    //Evaluates moves for being good
     for (int i = 0; i < moves.size() - 1; i++)
     {
+        auto currentMove = moves[i];
         //Adds score based on who you will capture
-        if (board.isCapture(moves[i]))
+        currentMove.setScore(ScoreToAdd(board, currentMove) + currentMove.score());
+
+        //Gets all the moves this move would allow
+        board.makeMove(currentMove);
+        chess::Movelist nextMoves;
+        chess::movegen::legalmoves(nextMoves, board);
+
+        //Checks if any of them would allow you to capture
+        int nextScore = 0;
+        for (int i = 0; i < nextMoves.size() - 1; i++)
         {
-            chess::Piece type = board.at(moves[i].to());
-            if (type == chess::PieceType::KING)
+            if (nextMoves[i].from() == currentMove.to())
             {
-                moves[i].setScore(moves[i].score() + KING_SCORE);
-            }
-            else if (type == chess::PieceType::QUEEN)
-            {
-                moves[i].setScore(moves[i].score() + QUEEN_SCORE);
-            }
-            else if (type == chess::PieceType::ROOK)
-            {
-                moves[i].setScore(moves[i].score() + ROOK_SCORE);
-            }
-            else if (type == chess::PieceType::KNIGHT)
-            {
-                moves[i].setScore(moves[i].score() + KNIGHT_SCORE);
-            }
-            else if (type == chess::PieceType::ROOK)
-            {
-                moves[i].setScore(moves[i].score() + ROOK_SCORE);
-            }
-            else
-            {
-                moves[i].setScore(moves[i].score() + PAWN_SCORE);
+                nextScore += ScoreToAdd(board, nextMoves[i]);
             }
         }
+        currentMove.setScore(nextScore * MOVE_SCORE_REDUCTION + currentMove.score());
+
+        //Resets board to actual current state
+        board.unmakeMove(currentMove);
     }
     //Gets highest value move
-    for (int i = 0; i < moves.size() - 1; i++)
+    for (int i = moves.size() - 1; i >= 0; i--)
     {
         if (moves[i].score() > move.score())
         {
@@ -78,4 +74,41 @@ std::string ChessSimulator::Move(std::string fen) {
 
     //Returns chosen move
     return chess::uci::moveToUci(move);
+}
+
+
+int ScoreToAdd(chess::Board board, auto move)
+{
+    int score = 0;
+    //Adds score based on who you will capture
+    if (board.isCapture(move))
+    {
+        chess::Piece type = board.at(move.to());
+        if (type == chess::PieceType::KING)
+        {
+            score += KING_SCORE;
+        }
+        else if (type == chess::PieceType::QUEEN)
+        {
+            score += QUEEN_SCORE;
+        }
+        else if (type == chess::PieceType::ROOK)
+        {
+            score += ROOK_SCORE;
+        }
+        else if (type == chess::PieceType::KNIGHT)
+        {
+            score += KNIGHT_SCORE;
+        }
+        else if (type == chess::PieceType::BISHOP)
+        {
+            score += BISHOP_SCORE;
+        }
+        else
+        {
+            score += PAWN_SCORE;
+        }
+    }
+
+    return score;
 }
