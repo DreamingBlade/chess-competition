@@ -40,12 +40,12 @@ std::string ChessSimulator::Move(std::string fen) {
     //Evaluates moves for being good
     for (int i = 0; i < moves.size() - 1; i++)
     {
-        auto currentMove = moves[i];
         //Adds score based on who you will capture
-        currentMove.setScore(ScoreToAdd(board, currentMove) + currentMove.score());
+        moves[i].setScore(ScoreToAdd(board, moves[i]) + moves[i].score());
 
+        
         //Gets all the moves this move would allow
-        board.makeMove(currentMove);
+        board.makeMove(moves[i]);
         chess::Movelist nextMoves;
         chess::movegen::legalmoves(nextMoves, board);
 
@@ -53,15 +53,16 @@ std::string ChessSimulator::Move(std::string fen) {
         int nextScore = 0;
         for (int i = 0; i < nextMoves.size() - 1; i++)
         {
-            if (nextMoves[i].from() == currentMove.to())
+            if (nextMoves[i].from() == moves[i].to())
             {
                 nextScore += ScoreToAdd(board, nextMoves[i]);
             }
         }
-        currentMove.setScore(nextScore * MOVE_SCORE_REDUCTION + currentMove.score());
+        moves[i].setScore(nextScore * MOVE_SCORE_REDUCTION + moves[i].score());
 
         //Resets board to actual current state
-        board.unmakeMove(currentMove);
+        board.unmakeMove(moves[i]);
+        
     }
     //Gets highest value move
     for (int i = moves.size() - 1; i >= 0; i--)
@@ -71,6 +72,8 @@ std::string ChessSimulator::Move(std::string fen) {
             move = moves[i];
         }
     }
+
+    std::cout << move.score() << "\n";
 
     //Returns chosen move
     return chess::uci::moveToUci(move);
@@ -109,6 +112,5 @@ int ScoreToAdd(chess::Board board, auto move)
             score += PAWN_SCORE;
         }
     }
-
     return score;
 }
