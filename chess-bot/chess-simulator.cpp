@@ -6,12 +6,12 @@
 using namespace ChessSimulator;
 
 
-const int KING_SCORE = 200;
-const int QUEEN_SCORE = 9;
-const int ROOK_SCORE = 5;
-const int KNIGHT_SCORE = 3;
-const int BISHOP_SCORE = 3;
-const int PAWN_SCORE = 1;
+const int KING_SCORE = 2000;
+const int QUEEN_SCORE = 90;
+const int ROOK_SCORE = 50;
+const int KNIGHT_SCORE = 30;
+const int BISHOP_SCORE = 30;
+const int PAWN_SCORE = 10;
 const float MOVE_SCORE_REDUCTION = 0.5f;
 
 std::string ChessSimulator::Move(std::string fen) {
@@ -44,25 +44,25 @@ std::string ChessSimulator::Move(std::string fen) {
         moves[i].setScore(ScoreToAdd(board, moves[i]) + moves[i].score());
 
         
-        //Gets all the moves this move would allow
-        board.makeMove(moves[i]);
+        //Makes the move, then the enemy's random move, so that it can check hwat this move allows
+        chess::Board nextBoard = board;
+        nextBoard.makeMove(moves[i]);
+        chess::Movelist nextMovesn;
+        chess::movegen::legalmoves(nextMovesn, nextBoard);
+        nextBoard.makeMove(nextMovesn[0]);
         chess::Movelist nextMoves;
-        chess::movegen::legalmoves(nextMoves, board);
-
+        chess::movegen::legalmoves(nextMoves, nextBoard);
         //Checks if any of them would allow you to capture
         int nextScore = 0;
-        for (int i = 0; i < nextMoves.size() - 1; i++)
+        for (int j = 0; j < nextMoves.size() - 1; j++)
         {
-            if (nextMoves[i].from() == moves[i].to())
+            if (nextMoves[j].from() == moves[i].to())
             {
-                nextScore += ScoreToAdd(board, nextMoves[i]);
+                nextScore += ScoreToAdd(nextBoard, nextMoves[j]);
             }
         }
         moves[i].setScore(nextScore * MOVE_SCORE_REDUCTION + moves[i].score());
 
-        //Resets board to actual current state
-        board.unmakeMove(moves[i]);
-        
     }
     //Gets highest value move
     for (int i = moves.size() - 1; i >= 0; i--)
@@ -73,6 +73,7 @@ std::string ChessSimulator::Move(std::string fen) {
         }
     }
 
+    //Outputs score
     std::cout << move.score() << "\n";
 
     //Returns chosen move
