@@ -47,10 +47,9 @@ std::string ChessSimulator::Move(std::string fen) {
         //Makes the move, then the enemy's random move, so that it can check hwat this move allows
         chess::Board nextBoard = board;
         nextBoard.makeMove(moves[i]);
-        chess::Movelist nextMovesn;
-        chess::movegen::legalmoves(nextMovesn, nextBoard);
-        nextBoard.makeMove(nextMovesn[0]);
         chess::Movelist nextMoves;
+        chess::movegen::legalmoves(nextMoves, nextBoard);
+        nextBoard.makeMove(nextMoves[0]);
         chess::movegen::legalmoves(nextMoves, nextBoard);
         //Checks if any of them would allow you to capture
         int nextScore = 0;
@@ -74,7 +73,7 @@ std::string ChessSimulator::Move(std::string fen) {
     }
 
     //Outputs score
-    std::cout << move.score() << "\n";
+    //std::cout << move.score() << "\n";
 
     //Returns chosen move
     return chess::uci::moveToUci(move);
