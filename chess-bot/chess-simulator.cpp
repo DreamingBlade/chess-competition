@@ -13,7 +13,7 @@ const int KNIGHT_SCORE = 30;
 const int BISHOP_SCORE = 30;
 const int PAWN_SCORE = 10;
 const float MOVE_SCORE_REDUCTION = 0.1f; //Multiplies this by the effects of future moves
-const float DEFENSIVE_WEIGHT = 0.0f; //Multiplies this by the score loss of losing a piece
+const float DEFENSIVE_WEIGHT = 0.2f; //Multiplies this by the score loss of losing a piece
 
 std::string ChessSimulator::Move(std::string fen) {
 
@@ -41,16 +41,17 @@ std::string ChessSimulator::Move(std::string fen) {
     //Evaluates moves for being good
     for (int i = 0; i < moves.size() - 1; i++)
     {
+        int currentPieceValue = PieceValue(board.at(moves[i].from()));
         //Adds score based on who you will capture
         moves[i].setScore(ScoreToAdd(board, moves[i]) + moves[i].score());
-
-        int currentPieceValue = PieceValue(board.at(moves[i].from()));
         
+
         //Makes the move, then the enemy's random move, so that it can check what this move allows
         chess::Board nextBoard = board;
         nextBoard.makeMove(moves[i]);
         chess::Movelist enemyMoves;
         chess::movegen::legalmoves(enemyMoves, nextBoard);
+
 
         //Checks if any of them would allow you to capture
         int nextScore = 0;
@@ -67,19 +68,42 @@ std::string ChessSimulator::Move(std::string fen) {
                 }
             }
         }
+        moves[i].setScore(nextScore * MOVE_SCORE_REDUCTION + moves[i].score());
 
-        //Checks whether this move would be in range of any enemy piece
-        int lossScore = 0;
+
+        //Checks if currently in range of enemy
+        bool isInRange = false;
+        for (int j = 0; j < enemyMoves.size() - 1; j++)
+        {
+            //Checks if the move would be in range
+            if (enemyMoves[j].to() == moves[i].from())
+            {
+                isInRange = true;
+                break;
+            }
+        }
+        //Avoids moves that would get this piece taken
+        bool wouldBeInRange = false;
         for (int j = 0; j < enemyMoves.size()-1; j++)
         {
+            //Checks if the move would be in range
             if (enemyMoves[j].to() == moves[i].to())
             {
-                lossScore = currentPieceValue * -1;
+                wouldBeInRange = true;
                 break;
             }
         }
 
-        moves[i].setScore((nextScore * MOVE_SCORE_REDUCTION) + (lossScore * DEFENSIVE_WEIGHT) + moves[i].score());
+        //Values moving out of range
+        if (isInRange && !wouldBeInRange)
+        {
+            moves[i].setScore(currentPieceValue * DEFENSIVE_WEIGHT + moves[i].score());
+        }
+        //Values not moving into range
+        if (!isInRange && wouldBeInRange)
+        {
+            moves[i].setScore(currentPieceValue * -1 * DEFENSIVE_WEIGHT + moves[i].score());
+        }
 
     }
     //Gets highest value move
