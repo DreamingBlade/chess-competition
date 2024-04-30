@@ -12,7 +12,7 @@ const int ROOK_SCORE = 50;
 const int KNIGHT_SCORE = 30;
 const int BISHOP_SCORE = 30;
 const int PAWN_SCORE = 10;
-const float MOVE_SCORE_REDUCTION = 0.5f;
+const float MOVE_SCORE_REDUCTION = 0.1f;
 
 std::string ChessSimulator::Move(std::string fen) {
 
@@ -28,7 +28,7 @@ std::string ChessSimulator::Move(std::string fen) {
     chess::Movelist moves;
     chess::movegen::legalmoves(moves, board);
     if(moves.size() == 0)
-    return "";
+        return "";
 
 
     // get random move
@@ -44,23 +44,30 @@ std::string ChessSimulator::Move(std::string fen) {
         moves[i].setScore(ScoreToAdd(board, moves[i]) + moves[i].score());
 
         
-        //Makes the move, then the enemy's random move, so that it can check hwat this move allows
+        //Makes the move, then the enemy's random move, so that it can check what this move allows
         chess::Board nextBoard = board;
         nextBoard.makeMove(moves[i]);
         chess::Movelist nextMoves;
         chess::movegen::legalmoves(nextMoves, nextBoard);
-        nextBoard.makeMove(nextMoves[0]);
-        chess::movegen::legalmoves(nextMoves, nextBoard);
+
         //Checks if any of them would allow you to capture
         int nextScore = 0;
-        for (int j = 0; j < nextMoves.size() - 1; j++)
+        if (nextMoves.size() == 0)
         {
-            if (nextMoves[j].from() == moves[i].to())
+            nextBoard.makeMove(nextMoves[0]);
+            chess::movegen::legalmoves(nextMoves, nextBoard);
+            for (int j = 0; j < nextMoves.size() - 1; j++)
             {
-                nextScore += ScoreToAdd(nextBoard, nextMoves[j]);
+                if (nextMoves[j].from() == moves[i].to())
+                {
+                    nextScore += ScoreToAdd(nextBoard, nextMoves[j]);
+                }
             }
         }
         moves[i].setScore(nextScore * MOVE_SCORE_REDUCTION + moves[i].score());
+
+
+        ///
 
     }
     //Gets highest value move
