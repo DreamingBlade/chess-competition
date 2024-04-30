@@ -44,6 +44,7 @@ std::string ChessSimulator::Move(std::string fen) {
         //Adds score based on who you will capture
         moves[i].setScore(ScoreToAdd(board, moves[i]) + moves[i].score());
 
+        int currentPieceValue = PieceValue(board.at(moves[i].from()));
         
         //Makes the move, then the enemy's random move, so that it can check what this move allows
         chess::Board nextBoard = board;
@@ -67,16 +68,13 @@ std::string ChessSimulator::Move(std::string fen) {
             }
         }
 
-        int lossScore = 0;
         //Checks whether this move would be in range of any enemy piece
+        int lossScore = 0;
         for (int j = 0; j < enemyMoves.size()-1; j++)
         {
             if (enemyMoves[j].to() == moves[i].to())
             {
-                lossScore = ScoreToAdd(nextBoard, enemyMoves[j]) * -1;
-            }
-            if (lossScore != 0)
-            {
+                lossScore = currentPieceValue * -1;
                 break;
             }
         }
