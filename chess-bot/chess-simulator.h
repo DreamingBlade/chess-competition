@@ -13,4 +13,5 @@ namespace ChessSimulator {
  */
 std::string Move(std::string fen);
 } // namespace ChessSimulator
-int ScoreToAdd(chess::Board, auto move);
+int ScoreToAdd(chess::Board board, auto move);
+int PieceValue(chess::Piece type);
